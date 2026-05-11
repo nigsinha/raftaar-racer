@@ -1,0 +1,466 @@
+{
+  "info": {
+    "name": "Raftaar Racer API",
+    "_postman_id": "raftaar-racer-collection-v1",
+    "description": "Complete API test suite for Raftaar Racer — Auth, Scores, Leaderboard",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:5000", "type": "string" },
+    { "key": "token",    "value": "",                      "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "── AUTH ──",
+      "item": [
+
+        {
+          "name": "01 Signup ✅",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/signup",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"TestPlayer1\",\n  \"password\": \"Test123\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Token returned', () => {",
+              "  const j = pm.response.json();",
+              "  pm.expect(j.token).to.be.a('string');",
+              "  pm.expect(j.username).to.eql('TestPlayer1');",
+              "  pm.collectionVariables.set('token', j.token);",
+              "  console.log('Token saved:', j.token.slice(0,16)+'...');",
+              "});"
+            ]}
+          }]
+        },
+
+        {
+          "name": "02 Signup — password too short ❌",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/signup",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"BadUser\",\n  \"password\": \"Ab1\"\n}" }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 400', () => pm.response.to.have.status(400));",
+              "pm.test('Error about length', () => pm.expect(pm.response.json().error).to.include('6'));"
+            ]}
+          }]
+        },
+
+        {
+          "name": "03 Signup — no uppercase ❌",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/signup",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"BadUser\",\n  \"password\": \"test123\"\n}" }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 400', () => pm.response.to.have.status(400));",
+              "pm.test('Error about uppercase', () => pm.expect(pm.response.json().error).to.include('uppercase'));"
+            ]}
+          }]
+        },
+
+        {
+          "name": "04 Signup — no lowercase ❌",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/signup",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"BadUser\",\n  \"password\": \"TEST123\"\n}" }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 400', () => pm.response.to.have.status(400));",
+              "pm.test('Error about lowercase', () => pm.expect(pm.response.json().error).to.include('lowercase'));"
+            ]}
+          }]
+        },
+
+        {
+          "name": "05 Signup — no number ❌",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/signup",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"BadUser\",\n  \"password\": \"TestTest\"\n}" }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 400', () => pm.response.to.have.status(400));",
+              "pm.test('Error about number', () => pm.expect(pm.response.json().error).to.include('number'));"
+            ]}
+          }]
+        },
+
+        {
+          "name": "06 Signup — has space ❌",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/signup",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"BadUser\",\n  \"password\": \"Test 123\"\n}" }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 400', () => pm.response.to.have.status(400));",
+              "pm.test('Error about spaces', () => pm.expect(pm.response.json().error).to.include('space'));"
+            ]}
+          }]
+        },
+
+        {
+          "name": "07 Signup — symbol in password ❌",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/signup",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"BadUser\",\n  \"password\": \"Test@123\"\n}" }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 400', () => pm.response.to.have.status(400));",
+              "pm.test('Error about symbols', () => pm.expect(pm.response.json().error).to.include('symbol'));"
+            ]}
+          }]
+        },
+
+        {
+          "name": "08 Signup — duplicate username ❌",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/signup",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"TestPlayer1\",\n  \"password\": \"Test123\"\n}" }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 409', () => pm.response.to.have.status(409));",
+              "pm.test('Username taken error', () => pm.expect(pm.response.json().error).to.include('taken'));"
+            ]}
+          }]
+        },
+
+        {
+          "name": "09 Login ✅",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"TestPlayer1\",\n  \"password\": \"Test123\"\n}" }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Token saved', () => {",
+              "  const j = pm.response.json();",
+              "  pm.expect(j.token).to.be.a('string');",
+              "  pm.collectionVariables.set('token', j.token);",
+              "});"
+            ]}
+          }]
+        },
+
+        {
+          "name": "10 Login — wrong password ❌",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"TestPlayer1\",\n  \"password\": \"Wrong999\"\n}" }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 401', () => pm.response.to.have.status(401));",
+              "pm.test('Invalid credentials error', () => pm.expect(pm.response.json().error).to.include('Invalid'));"
+            ]}
+          }]
+        },
+
+        {
+          "name": "11 Get My Profile ✅",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/me",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Profile fields present', () => {",
+              "  const j = pm.response.json();",
+              "  pm.expect(j.username).to.eql('TestPlayer1');",
+              "  pm.expect(j).to.have.all.keys('username','games','best','total_coins');",
+              "  console.log('Profile:', JSON.stringify(j));",
+              "});"
+            ]}
+          }]
+        },
+
+        {
+          "name": "12 Get Profile — no token ❌",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/me"
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 401', () => pm.response.to.have.status(401));",
+              "pm.test('Unauthorized', () => pm.expect(pm.response.json().error).to.eql('Unauthorized'));"
+            ]}
+          }]
+        }
+
+      ]
+    },
+
+    {
+      "name": "── SCORES ──",
+      "item": [
+
+        {
+          "name": "13 Submit Score ✅",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/scores",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"score\": 1250,\n  \"coins\": 18,\n  \"level\": 4\n}" }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Score accepted', () => pm.expect(pm.response.json().ok).to.be.true);"
+            ]}
+          }]
+        },
+
+        {
+          "name": "14 Submit High Score ✅",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/scores",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"score\": 9850,\n  \"coins\": 97,\n  \"level\": 25\n}" }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('High score accepted', () => pm.expect(pm.response.json().ok).to.be.true);"
+            ]}
+          }]
+        },
+
+        {
+          "name": "15 Submit Invalid Score ❌",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/scores",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"score\": 99999999,\n  \"coins\": 0,\n  \"level\": 1\n}" }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 400', () => pm.response.to.have.status(400));"
+            ]}
+          }]
+        },
+
+        {
+          "name": "16 Submit Score — no token ❌",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/scores",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"score\": 500,\n  \"coins\": 5,\n  \"level\": 2\n}" }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 401 without token', () => pm.response.to.have.status(401));"
+            ]}
+          }]
+        },
+
+        {
+          "name": "17 My Score History ✅",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/my-scores",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('History array returned', () => {",
+              "  const j = pm.response.json();",
+              "  pm.expect(j).to.be.an('array');",
+              "  pm.expect(j.length).to.be.at.least(1);",
+              "  pm.expect(j[0]).to.have.property('score');",
+              "  pm.expect(j[0]).to.have.property('played_at');",
+              "  console.log('Scores:', j.map(s => s.score));",
+              "});"
+            ]}
+          }]
+        }
+
+      ]
+    },
+
+    {
+      "name": "── LEADERBOARD ──",
+      "item": [
+
+        {
+          "name": "18 Leaderboard — Daily ✅",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/leaderboard?period=daily"
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Array with correct shape', () => {",
+              "  const j = pm.response.json();",
+              "  pm.expect(j).to.be.an('array');",
+              "  if(j.length > 0) {",
+              "    pm.expect(j[0]).to.have.all.keys('username','best_score','games_played','max_level');",
+              "    console.log('Daily top:', j[0]);",
+              "  }",
+              "});"
+            ]}
+          }]
+        },
+
+        {
+          "name": "19 Leaderboard — Weekly ✅",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/leaderboard?period=weekly"
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]}
+          }]
+        },
+
+        {
+          "name": "20 Leaderboard — Monthly ✅",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/leaderboard?period=monthly"
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]}
+          }]
+        },
+
+        {
+          "name": "21 Leaderboard — All Time ✅",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/leaderboard?period=all"
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Sorted by best_score descending', () => {",
+              "  const j = pm.response.json();",
+              "  pm.expect(j).to.be.an('array');",
+              "  for(let i = 1; i < j.length; i++) {",
+              "    pm.expect(j[i-1].best_score).to.be.at.least(j[i].best_score);",
+              "  }",
+              "  console.log('All time top 3:', j.slice(0,3).map(r => r.username+':'+r.best_score));",
+              "});"
+            ]}
+          }]
+        }
+
+      ]
+    },
+
+    {
+      "name": "── LOGOUT ──",
+      "item": [
+
+        {
+          "name": "22 Logout ✅",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/logout",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Logout confirmed', () => pm.expect(pm.response.json().ok).to.be.true);"
+            ]}
+          }]
+        },
+
+        {
+          "name": "23 Use token after logout ❌",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/me",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status 401 after logout', () => pm.response.to.have.status(401));",
+              "pm.test('Token is invalidated', () => pm.expect(pm.response.json().error).to.eql('Unauthorized'));"
+            ]}
+          }]
+        }
+
+      ]
+    }
+
+  ]
+}
