@@ -447,7 +447,7 @@ function drawGameOver(sc,hs,rec,earned){
 // GAME STATE
 // ═══════════════════════════════════════════════════════
 const S={START:0,PLAYING:1,GAMEOVER:2};
-let state=S.START,paused=false;
+let state=S.START,paused=false,goData={};
 let playerX,spd,fuel,score,level,prevLevel;
 let enemies,fuels_arr,coins_arr,pups_arr,explosions,popups;
 let spawnCd,fuelCd,coinCd,puCd,lt;
@@ -470,6 +470,7 @@ function initGame(){
   shT=0;boT=0;slT=0;nightLv=0;rainLv=0;frameT=0;aliveT=0;sesCoins=0;
   mission=pickM();mProg={};mDone=false;mProg[mission.key]=0;
   lt=performance.now();
+  endGameCalled=false;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -682,7 +683,8 @@ function loop(t){
   if(crash){
     explosions.push({x:playerX,y:PLY,frame:0});
     shakePow=14;shakeT=22;vib([60,30,120,30,200]);beep('crash');
-    setTimeout(endGame,220);state=S.GAMEOVER;
+    state=S.GAMEOVER; // stop the loop immediately
+    setTimeout(endGame,220);
   }
 }
 
@@ -701,7 +703,10 @@ async function submitScoreToServer(sc, coins, lv){
   }catch(e){}
 }
 
+let endGameCalled=false;
 function endGame(){
+  if(endGameCalled)return; // prevent double-call
+  endGameCalled=true;
   const isRec=score>highScore;
   if(isRec)highScore=score;
   saveS({hs:highScore,coins:totalCoins});addLB(score);submitScoreToServer(score,sesCoins,level);
@@ -709,7 +714,15 @@ function endGame(){
   try{navigator.vibrate&&navigator.vibrate(0);}catch(e){}
   if(engineGain)engineGain.gain.value=0;
   state=S.GAMEOVER;
-  setTimeout(()=>drawGameOver(score,highScore,isRec,sesCoins),280);
+  // Store game over data for the animation loop
+  goData={sc:score,hs:highScore,rec:isRec,coins:sesCoins};
+  setTimeout(()=>{
+    (function animGameOver(){
+      if(state!==S.GAMEOVER)return;
+      drawGameOver(goData.sc,goData.hs,goData.rec,goData.coins);
+      requestAnimationFrame(animGameOver);
+    })();
+  },280);
 }
 
 // ═══════════════════════════════════════════════════════
