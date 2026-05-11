@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Raftaar Racer — Login</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{min-height:100vh;background:#060608;font-family:'Orbitron',monospace;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:16px}
+
+/* ── HERO ── */
+.hero{text-align:center;padding:24px 0 20px}
+.hero h1{font-size:clamp(28px,8vw,52px);font-weight:900;letter-spacing:4px;
+  background:linear-gradient(135deg,#ff4400,#ffcc00);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:#888;font-size:10px;letter-spacing:3px;margin-top:6px}
+
+/* ── CARD ── */
+.card{background:#0d0d14;border:1px solid #222;border-radius:16px;padding:28px 24px;width:100%;max-width:380px;margin-bottom:20px}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:0;border-radius:10px;overflow:hidden;border:1px solid #222;margin-bottom:24px}
+.tab{flex:1;padding:10px;font-family:'Orbitron',monospace;font-size:11px;font-weight:700;letter-spacing:1px;
+  background:#0a0a12;color:#555;border:none;cursor:pointer;transition:all .2s}
+.tab.active{background:linear-gradient(135deg,#1a0a00,#2a1200);color:#ffaa33;border-bottom:2px solid #ff6600}
+
+/* ── FORM ── */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:8px;letter-spacing:2px;color:#666;margin-bottom:6px;text-transform:uppercase}
+.form-group input{width:100%;padding:12px 14px;background:#111;border:1px solid #2a2a3a;border-radius:8px;
+  color:#fff;font-family:'Orbitron',monospace;font-size:13px;outline:none;transition:border-color .2s}
+.form-group input:focus{border-color:#ff6600}
+
+.btn-primary{width:100%;padding:14px;background:linear-gradient(135deg,#cc3300,#ff6600);border:none;border-radius:10px;
+  color:#fff;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all .2s;margin-top:4px}
+.btn-primary:hover{transform:translateY(-1px);filter:brightness(1.15)}
+.btn-primary:active{transform:scale(.97)}
+.btn-secondary{width:100%;padding:12px;background:transparent;border:1px solid #333;border-radius:10px;
+  color:#888;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;transition:all .2s;margin-top:8px}
+.btn-secondary:hover{border-color:#ff6600;color:#ffaa33}
+
+.msg{padding:10px 14px;border-radius:8px;font-size:10px;letter-spacing:1px;margin-bottom:14px;display:none}
+.msg.error{background:#2a0a08;border:1px solid #661111;color:#ff6655}
+.msg.success{background:#0a1a0a;border:1px solid #116611;color:#55ff66}
+
+/* ── LOGGED IN STATE ── */
+.user-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;
+  background:#0d1a0d;border:1px solid #1a3a1a;border-radius:10px;padding:10px 16px}
+.user-bar .uname{color:#55ff88;font-size:12px;font-weight:700}
+.user-bar .stats{color:#555;font-size:9px;letter-spacing:1px}
+.btn-logout{background:none;border:1px solid #332211;color:#885533;font-family:'Orbitron',monospace;
+  font-size:9px;padding:6px 10px;border-radius:6px;cursor:pointer;transition:all .2s}
+.btn-logout:hover{border-color:#ff4400;color:#ff4400}
+.btn-play{width:100%;padding:18px;background:linear-gradient(135deg,#003388,#0055cc);border:none;border-radius:12px;
+  color:#88ccff;font-family:'Orbitron',monospace;font-size:15px;font-weight:900;letter-spacing:3px;cursor:pointer;
+  transition:all .2s;box-shadow:0 0 30px #0044ff33;margin-bottom:12px}
+.btn-play:hover{transform:translateY(-2px);box-shadow:0 0 40px #0066ff55}
+
+/* ── LEADERBOARD ── */
+.lb-card{background:#0d0d14;border:1px solid #222;border-radius:16px;padding:24px;width:100%;max-width:380px}
+.lb-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.lb-header h2{font-size:13px;font-weight:700;letter-spacing:3px;color:#ffcc00}
+.period-tabs{display:flex;gap:4px}
+.ptab{padding:5px 8px;font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;
+  background:#111;color:#555;border:1px solid #222;border-radius:6px;cursor:pointer;transition:all .2s}
+.ptab.active{background:#1a1400;color:#ffcc00;border-color:#ffcc0055}
+
+.lb-table{width:100%;border-collapse:collapse}
+.lb-table th{font-size:7px;letter-spacing:2px;color:#444;text-align:left;padding:0 8px 10px;border-bottom:1px solid #1a1a1a}
+.lb-table th:last-child,.lb-table td:last-child{text-align:right}
+.lb-table tr.lb-row td{padding:10px 8px;border-bottom:1px solid #0f0f18;font-size:11px;transition:background .15s}
+.lb-table tr.lb-row:hover td{background:#121218}
+.lb-table tr.lb-row:first-child td{color:#ffcc00}
+.lb-table tr.lb-row:nth-child(2) td{color:#aaaaaa}
+.lb-table tr.lb-row:nth-child(3) td{color:#cc8844}
+.rank-badge{display:inline-block;width:20px;height:20px;border-radius:50%;background:#1a1a2a;
+  font-size:9px;text-align:center;line-height:20px;margin-right:6px}
+.score-val{font-weight:700;font-size:13px;letter-spacing:1px}
+.empty-lb{text-align:center;color:#333;font-size:10px;padding:30px 0;letter-spacing:2px}
+.my-rank{color:#55aaff;font-size:9px;letter-spacing:1px;margin-top:12px;text-align:center}
+
+.spinner{border:2px solid #222;border-top-color:#ff6600;border-radius:50%;width:20px;height:20px;
+  animation:spin .7s linear infinite;margin:20px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── PASSWORD RULES ── */
+.pw-rules{margin:10px 0 14px;padding:10px 12px;background:#0a0a0f;border:1px solid #1a1a2a;border-radius:8px;display:none}
+.pw-rules.visible{display:block}
+.pw-rule{display:flex;align-items:center;gap:7px;font-size:9px;letter-spacing:1px;padding:3px 0;
+  color:#444;transition:color .2s}
+.pw-rule.pass{color:#44cc66}
+.pw-rule.fail{color:#cc3322}
+.pw-rule::before{content:'○';font-size:11px;flex-shrink:0;transition:all .2s}
+.pw-rule.pass::before{content:'✓';color:#44cc66}
+.pw-rule.fail::before{content:'✗';color:#cc3322}
+.pw-strength{height:3px;border-radius:2px;margin-top:8px;background:#1a1a2a;overflow:hidden}
+.pw-strength-bar{height:100%;width:0%;border-radius:2px;transition:width .3s,background .3s}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>RAFTAAR RACER</h1>
+  <p>LOGIN TO TRACK YOUR PROGRESS</p>
+</div>
+
+<!-- AUTH CARD -->
+<div class="card" id="authCard">
+  <!-- shown when logged out -->
+  <div id="authForms">
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('login')">LOGIN</button>
+      <button class="tab" onclick="showTab('signup')">SIGN UP</button>
+    </div>
+    <div id="authMsg" class="msg"></div>
+
+    <div id="loginForm">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="loginUser" placeholder="your username" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" onclick="doLogin()">▶ LOGIN</button>
+    </div>
+
+    <div id="signupForm" style="display:none">
+      <div class="form-group">
+        <label>Username <span style="color:#555;font-size:8px">(3-20 chars)</span></label>
+        <input type="text" id="signupUser" placeholder="choose a username" maxlength="20" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="signupPass" placeholder="••••••••" autocomplete="new-password"
+               oninput="checkPwRules(this.value)" onfocus="showRules()" maxlength="32">
+      </div>
+      <!-- live rule checklist -->
+      <div class="pw-rules" id="pwRules">
+        <div class="pw-rule" id="rule-len">At least 6 characters</div>
+        <div class="pw-rule" id="rule-upper">One uppercase letter (A-Z)</div>
+        <div class="pw-rule" id="rule-lower">One lowercase letter (a-z)</div>
+        <div class="pw-rule" id="rule-num">One number (0-9)</div>
+        <div class="pw-rule" id="rule-nospace">No spaces</div>
+        <div class="pw-rule" id="rule-nosym">Letters and numbers only</div>
+        <div class="pw-strength"><div class="pw-strength-bar" id="pwBar"></div></div>
+      </div>
+      <button class="btn-primary" id="signupBtn" onclick="doSignup()" disabled
+              style="opacity:.4;cursor:not-allowed">✦ CREATE ACCOUNT</button>
+    </div>
+  </div>
+
+  <!-- shown when logged in -->
+  <div id="loggedIn" style="display:none">
+    <div class="user-bar">
+      <div>
+        <div class="uname" id="displayUser"></div>
+        <div class="stats" id="displayStats"></div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">LOGOUT</button>
+    </div>
+    <button class="btn-play" onclick="location.href='/game'">▶ PLAY NOW</button>
+    <button class="btn-secondary" onclick="location.href='/game'">GUEST MODE (no login)</button>
+  </div>
+</div>
+
+<!-- LEADERBOARD CARD -->
+<div class="lb-card">
+  <div class="lb-header">
+    <h2>🏆 LEADERBOARD</h2>
+    <div class="period-tabs">
+      <button class="ptab active" onclick="loadLB('daily',this)">TODAY</button>
+      <button class="ptab" onclick="loadLB('weekly',this)">WEEK</button>
+      <button class="ptab" onclick="loadLB('monthly',this)">MONTH</button>
+      <button class="ptab" onclick="loadLB('all',this)">ALL</button>
+    </div>
+  </div>
+  <div id="lbBody"><div class="spinner"></div></div>
+  <div id="myRank" class="my-rank"></div>
+</div>
+
+<script>
+const API = '';
+let currentUser = null;
+
+// ── TOKEN STORAGE ──────────────────────────────────────────
+function getToken(){ return localStorage.getItem('rr_token'); }
+function setToken(t){ localStorage.setItem('rr_token', t); }
+function clearToken(){ localStorage.removeItem('rr_token'); localStorage.removeItem('rr_user'); }
+
+// ── INIT ──────────────────────────────────────────────────
+async function init(){
+  const token = getToken();
+  if(token){
+    try{
+      const r = await fetch(API+'/api/me', {headers:{'Authorization':'Bearer '+token}});
+      if(r.ok){
+        const data = await r.json();
+        showLoggedIn(data);
+      } else {
+        clearToken();
+      }
+    }catch(e){ /* network error, show login */ }
+  }
+  loadLB('daily', document.querySelector('.ptab.active'));
+}
+
+function showLoggedIn(data){
+  currentUser = data;
+  document.getElementById('authForms').style.display = 'none';
+  document.getElementById('loggedIn').style.display = 'block';
+  document.getElementById('displayUser').textContent = '👤 ' + data.username;
+  document.getElementById('displayStats').textContent =
+    `BEST: ${String(data.best).padStart(7,'0')} | GAMES: ${data.games}`;
+}
+
+// ── TABS ──────────────────────────────────────────────────
+function showTab(tab){
+  document.getElementById('loginForm').style.display = tab==='login'?'block':'none';
+  document.getElementById('signupForm').style.display = tab==='signup'?'block':'none';
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='signup')));
+  showMsg('','');
+}
+
+function showMsg(type, text){
+  const el = document.getElementById('authMsg');
+  el.className = 'msg' + (type?' '+type:'');
+  el.textContent = text;
+  el.style.display = text ? 'block' : 'none';
+}
+
+// ── AUTH ──────────────────────────────────────────────────
+async function doLogin(){
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  if(!u||!p){ showMsg('error','Enter username and password'); return; }
+  try{
+    const r = await fetch(API+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const d = await r.json();
+    if(!r.ok){ showMsg('error', d.error); return; }
+    setToken(d.token);
+    localStorage.setItem('rr_user', d.username);
+    const me = await fetch(API+'/api/me',{headers:{'Authorization':'Bearer '+d.token}});
+    showLoggedIn(await me.json());
+    loadLB('daily', document.querySelector('.ptab.active'));
+  }catch(e){ showMsg('error','Connection error'); }
+}
+
+async function doSignup(){
+  const u = document.getElementById('signupUser').value.trim();
+  const p = document.getElementById('signupPass').value;
+  if(!u||!p){ showMsg('error','Fill in all fields'); return; }
+  try{
+    const r = await fetch(API+'/api/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const d = await r.json();
+    if(!r.ok){ showMsg('error', d.error); return; }
+    setToken(d.token);
+    localStorage.setItem('rr_user', d.username);
+    const me = await fetch(API+'/api/me',{headers:{'Authorization':'Bearer '+d.token}});
+    showLoggedIn(await me.json());
+    loadLB('daily', document.querySelector('.ptab.active'));
+  }catch(e){ showMsg('error','Connection error'); }
+}
+
+async function doLogout(){
+  const token = getToken();
+  if(token) fetch(API+'/api/logout',{method:'POST',headers:{'Authorization':'Bearer '+token}});
+  clearToken();
+  currentUser = null;
+  document.getElementById('authForms').style.display = 'block';
+  document.getElementById('loggedIn').style.display = 'none';
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+}
+
+// ── LEADERBOARD ───────────────────────────────────────────
+const MEDALS = ['🥇','🥈','🥉','4','5','6','7','8','9','10'];
+
+async function loadLB(period, btn){
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('lbBody').innerHTML = '<div class="spinner"></div>';
+  document.getElementById('myRank').textContent = '';
+
+  try{
+    const r = await fetch(API+'/api/leaderboard?period='+period);
+    const rows = await r.json();
+    if(!rows.length){
+      document.getElementById('lbBody').innerHTML = '<div class="empty-lb">NO SCORES YET<br><span style="font-size:8px">Be the first!</span></div>';
+      return;
+    }
+
+    const myUser = currentUser?.username || localStorage.getItem('rr_user');
+    let myRankNum = -1;
+
+    let html = '<table class="lb-table"><thead><tr><th>#</th><th>PLAYER</th><th>BEST SCORE</th><th>GAMES</th></tr></thead><tbody>';
+    rows.forEach((row,i)=>{
+      const isMe = row.username === myUser;
+      if(isMe) myRankNum = i+1;
+      html += `<tr class="lb-row" style="${isMe?'background:#0a1a2a;':''}">`
+        + `<td><span class="rank-badge">${MEDALS[i]||i+1}</span></td>`
+        + `<td style="${isMe?'color:#55aaff;font-weight:700':''}">${isMe?'▶ ':''}`+escHtml(row.username)+`</td>`
+        + `<td><span class="score-val">${String(row.best_score).padStart(7,'0')}</span></td>`
+        + `<td style="color:#555">${row.games_played}</td>`
+        + '</tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('lbBody').innerHTML = html;
+
+    if(myRankNum>0)
+      document.getElementById('myRank').textContent = `YOUR RANK: #${myRankNum}`;
+  }catch(e){
+    document.getElementById('lbBody').innerHTML = '<div class="empty-lb">Could not load leaderboard</div>';
+  }
+}
+
+function escHtml(s){ const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+
+// ── PASSWORD RULES ───────────────────────────────────────
+const RULES = [
+  { id: 'rule-len',     test: pw => pw.length >= 6 },
+  { id: 'rule-upper',   test: pw => /[A-Z]/.test(pw) },
+  { id: 'rule-lower',   test: pw => /[a-z]/.test(pw) },
+  { id: 'rule-num',     test: pw => /[0-9]/.test(pw) },
+  { id: 'rule-nospace', test: pw => !/\s/.test(pw) && pw.length > 0 },
+  { id: 'rule-nosym',   test: pw => /^[A-Za-z0-9]*$/.test(pw) && pw.length > 0 },
+];
+
+function showRules(){
+  document.getElementById('pwRules').classList.add('visible');
+}
+
+function checkPwRules(pw){
+  let passed = 0;
+  RULES.forEach(r => {
+    const ok = r.test(pw);
+    const el = document.getElementById(r.id);
+    el.classList.toggle('pass', ok);
+    el.classList.toggle('fail', pw.length > 0 && !ok);
+    if(ok) passed++;
+  });
+
+  // strength bar
+  const pct = Math.round((passed / RULES.length) * 100);
+  const bar = document.getElementById('pwBar');
+  bar.style.width = pct + '%';
+  bar.style.background = pct < 50 ? '#cc2200' : pct < 100 ? '#ffaa00' : '#22cc55';
+
+  // enable/disable submit button
+  const allPass = passed === RULES.length;
+  const btn = document.getElementById('signupBtn');
+  btn.disabled = !allPass;
+  btn.style.opacity = allPass ? '1' : '0.4';
+  btn.style.cursor  = allPass ? 'pointer' : 'not-allowed';
+}
+
+// ── KEYBOARD SUBMIT ───────────────────────────────────────
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter'){
+    if(document.getElementById('signupForm').style.display!=='none') doSignup();
+    else doLogin();
+  }
+});
+
+init();
+</script>
+</body>
+</html>

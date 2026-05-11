@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: raftaar-racer
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DB_PATH
+        value: /opt/render/project/src/raftaar.db
+    disk:
+      name: raftaar-db
+      mountPath: /opt/render/project/src
+      sizeGB: 1
