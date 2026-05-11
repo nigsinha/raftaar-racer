@@ -222,21 +222,72 @@ function drawCoin(x,y,t){
   ctx.restore();
 }
 function drawPU(x,y,kind,t){
-  ctx.save();const p=0.9+Math.sin(t*0.07)*0.1;
-  const cols={shield:'#00aaff',boost:'#ff6600',slowmo:'#aa00ff'};
+  ctx.save();
+  const bob=Math.sin(t*0.09)*3; // bobbing
+  const yy=y+bob;
+  const p=0.92+Math.sin(t*0.11)*0.08;
+  const cols={shield:'#00ccff',boost:'#ff6600',slowmo:'#cc44ff'};
   const lbl={shield:'\u{1F6E1}',boost:'\u26A1',slowmo:'\u23F1'};
   const col=cols[kind];
-  const g=ctx.createRadialGradient(x+14,y+14,3,x+14,y+14,18);
-  g.addColorStop(0,col+'99');g.addColorStop(1,col+'00');
-  ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x+14,y+14,18,18,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=col+'44';ctx.beginPath();ctx.roundRect(x+2,y+2,24,24,6);ctx.fill();
-  ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(x+2,y+2,24,24,6);ctx.stroke();
-  ctx.font=`${14*p}px monospace`;ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText(lbl[kind],x+14,y+19);
+
+  // outer rotating ring
+  ctx.save();ctx.translate(x+14,yy+14);ctx.rotate(t*0.06);
+  ctx.strokeStyle=col+'99';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.arc(0,0,16,0,Math.PI*2);ctx.stroke();
+  ctx.setLineDash([]);ctx.restore();
+
+  // glow
+  const g=ctx.createRadialGradient(x+14,yy+14,2,x+14,yy+14,17);
+  g.addColorStop(0,col+'bb');g.addColorStop(1,col+'00');
+  ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x+14,yy+14,17,17,0,0,Math.PI*2);ctx.fill();
+
+  // box
+  ctx.fillStyle=col+'33';ctx.beginPath();ctx.roundRect(x+3,yy+3,22,22,6);ctx.fill();
+  ctx.strokeStyle=col;ctx.lineWidth=2;ctx.shadowColor=col;ctx.shadowBlur=8;
+  ctx.beginPath();ctx.roundRect(x+3,yy+3,22,22,6);ctx.stroke();
+  ctx.shadowBlur=0;
+
+  // icon
+  ctx.font=`${Math.round(14*p)}px monospace`;ctx.textAlign='center';
+  ctx.fillStyle='#fff';ctx.fillText(lbl[kind],x+14,yy+19);
   ctx.restore();
 }
 function drawShield(x,y,t){
-  ctx.save();const a=0.3+Math.sin(t*0.15)*0.2;
-  ctx.strokeStyle=`rgba(0,180,255,${a+0.4})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(x+16,y+24,22,28,0,0,Math.PI*2);ctx.stroke();
+  ctx.save();
+  const cx2=x+16,cy2=y+24,pulse=Math.sin(t*0.18)*0.15;
+  const urgency=shT<60?0.5+Math.sin(t*0.6)*0.5:1; // flicker when low
+
+  // outer glow
+  const g=ctx.createRadialGradient(cx2,cy2,14,cx2,cy2,32);
+  g.addColorStop(0,`rgba(0,180,255,${0.10*urgency})`);
+  g.addColorStop(1,'rgba(0,180,255,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(cx2,cy2,32,38,0,0,Math.PI*2);ctx.fill();
+
+  // filled inner dome
+  ctx.fillStyle=`rgba(0,160,255,${(0.07+pulse*0.03)*urgency})`;
+  ctx.beginPath();ctx.ellipse(cx2,cy2,21,27,0,0,Math.PI*2);ctx.fill();
+
+  // main shell — two rotating arcs
+  [0,Math.PI].forEach((off,i)=>{
+    ctx.save();ctx.translate(cx2,cy2);ctx.rotate(t*0.04*(i?-1:1)+off);
+    ctx.strokeStyle=`rgba(0,210,255,${(0.7+pulse)*urgency})`;
+    ctx.lineWidth=2.5;ctx.setLineDash([18,10]);
+    ctx.beginPath();ctx.ellipse(0,0,21,27,0,0,Math.PI*2);ctx.stroke();
+    ctx.restore();
+  });
+
+  // solid bright ring
+  ctx.setLineDash([]);
+  ctx.strokeStyle=`rgba(100,230,255,${(0.45+pulse)*urgency})`;
+  ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(cx2,cy2,21,27,0,0,Math.PI*2);ctx.stroke();
+
+  // energy sparks
+  for(let i=0;i<6;i++){
+    const ang=(t*0.09+i/6*Math.PI*2);
+    const sx=cx2+Math.cos(ang)*21,sy=cy2+Math.sin(ang)*27*0.85;
+    ctx.fillStyle=`rgba(180,240,255,${0.6*urgency})`;
+    ctx.beginPath();ctx.arc(sx,sy,1.5,0,Math.PI*2);ctx.fill();
+  }
   ctx.restore();
 }
 function drawExplosion(x,y,f){
@@ -373,22 +424,37 @@ function drawStart(){
   ctx.fillStyle='rgba(0,0,0,0.84)';ctx.fillRect(0,0,BW,BH);
   if(menuTab==='garage'){drawGarage();return;}
   if(menuTab==='scores'){drawScores();return;}
+  if(menuTab==='help'){drawHelp();return;}
   ctx.shadowColor='#ff6600';ctx.shadowBlur=26;ctx.fillStyle='#ff5500';ctx.font='bold 40px Orbitron,monospace';ctx.textAlign='center';ctx.fillText('RAFTAAR',BW/2,96);
   ctx.fillStyle='#ffcc00';ctx.shadowColor='#ffcc00';ctx.fillText('RACER',BW/2,142);ctx.shadowBlur=0;
   drawPlayer(BW/2-16,156,activeCar);
-  ctx.fillStyle='rgba(255,255,255,0.04)';ctx.beginPath();ctx.roundRect(22,218,276,112,10);ctx.fill();
-  ctx.strokeStyle='rgba(255,204,0,0.25)';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(22,218,276,112,10);ctx.stroke();
-  ctx.fillStyle='#ffcc00';ctx.font='bold 8px Orbitron,monospace';ctx.textAlign='center';ctx.fillText('HOW TO PLAY',BW/2,234);
+
+  // quick tips card
+  ctx.fillStyle='rgba(255,255,255,0.04)';ctx.beginPath();ctx.roundRect(22,210,276,118,10);ctx.fill();
+  ctx.strokeStyle='rgba(255,204,0,0.25)';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(22,210,276,118,10);ctx.stroke();
+  ctx.fillStyle='#ffcc00';ctx.font='bold 8px Orbitron,monospace';ctx.textAlign='center';ctx.fillText('QUICK TIPS',BW/2,226);
   ctx.fillStyle='#ccc';ctx.font='9px monospace';
-  ['Arrow keys / buttons to steer & speed','Collect fuel cans to keep going','Grab coins for points & upgrades','\u{1F6E1} Shield  \u26A1 Boost  \u23F1 Slow-Mo  power-ups'].forEach((t,i)=>ctx.fillText(t,BW/2,252+i*17));
-  drawFuelCan(BW/2+80,288);drawCoin(BW/2-96,295,0);
-  ctx.fillStyle='#888';ctx.font='8px Orbitron,monospace';ctx.textAlign='center';ctx.fillText('COINS: $ '+totalCoins,BW/2,342);
-  drawButton(BW/2-72,350,144,36,'\u25B6  START');
-  drawButton(BW/2-118,396,68,28,'GARAGE','#223344','#112233');
-  ctx.fillStyle='#99aabb';ctx.font='bold 8px Orbitron,monospace';ctx.textAlign='center';ctx.fillText('GARAGE',BW/2-84,418);
-  drawButton(BW/2+50,396,68,28,'SCORES','#223344','#112233');
-  ctx.fillStyle='#99aabb';ctx.font='bold 8px Orbitron,monospace';ctx.textAlign='center';ctx.fillText('SCORES',BW/2+84,418);
-  ctx.fillStyle='#444';ctx.font='8px monospace';ctx.fillText('P = pause',BW/2,456);
+  ['◀ ▶  Steer   ▲ Gas   ▼ Brake',
+   '⛽ Collect fuel to stay alive',
+   '🪙 Coins unlock new cars',
+   '🛡️ Shield  ⚡ Boost  ⏱ Slow-Mo'].forEach((t,i)=>ctx.fillText(t,BW/2,244+i*18));
+  // "? HELP" hint inside card
+  ctx.fillStyle='#555';ctx.font='7px monospace';ctx.textAlign='center';ctx.fillText('Tap HELP below for full guide',BW/2,320);
+
+  ctx.fillStyle='#888';ctx.font='8px Orbitron,monospace';ctx.textAlign='center';ctx.fillText('COINS: $ '+totalCoins,BW/2,344);
+  drawButton(BW/2-72,352,144,36,'\u25B6  START');
+
+  // 3 bottom tabs: GARAGE | HELP | SCORES
+  drawButton(BW/2-143,396,72,28,'GARAGE','#223344','#112233');
+  ctx.fillStyle='#99aabb';ctx.font='bold 7px Orbitron,monospace';ctx.textAlign='center';ctx.fillText('GARAGE',BW/2-107,415);
+
+  drawButton(BW/2-30,396,60,28,'? HELP','#1a2200','#0e1800');
+  ctx.fillStyle='#aacc55';ctx.font='bold 7px Orbitron,monospace';ctx.textAlign='center';ctx.fillText('? HELP',BW/2,415);
+
+  drawButton(BW/2+34,396,72,28,'SCORES','#223344','#112233');
+  ctx.fillStyle='#99aabb';ctx.font='bold 7px Orbitron,monospace';ctx.textAlign='center';ctx.fillText('SCORES',BW/2+70,415);
+
+  ctx.fillStyle='#333';ctx.font='8px monospace';ctx.fillText('P = pause',BW/2,456);
 }
 
 function drawGarage(){
@@ -426,6 +492,85 @@ function drawScores(){
   ctx.fillStyle='#888';ctx.font='bold 9px Orbitron,monospace';ctx.textAlign='center';ctx.fillText('\u2190 BACK',BW/2,461);
 }
 
+function drawHelp(){
+  // background
+  ctx.fillStyle='rgba(0,0,0,0.97)';ctx.fillRect(0,0,BW,BH);
+
+  // title bar
+  const tg=ctx.createLinearGradient(0,0,BW,0);
+  tg.addColorStop(0,'#ff5500');tg.addColorStop(0.5,'#ffcc00');tg.addColorStop(1,'#ff5500');
+  ctx.fillStyle=tg;ctx.fillRect(0,0,BW,42);
+  ctx.fillStyle='#000';ctx.font='bold 14px Orbitron,monospace';ctx.textAlign='center';ctx.fillText('HOW TO PLAY',BW/2,27);
+
+  let oy=54; // running y cursor
+
+  // ── SECTION helper ─────────────────────────────────
+  function section(label,color){
+    ctx.fillStyle=color||'#ffcc00';ctx.font='bold 8px Orbitron,monospace';ctx.textAlign='left';
+    ctx.fillText(label,14,oy);
+    ctx.strokeStyle=(color||'#ffcc00')+'55';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(14,oy+3);ctx.lineTo(BW-14,oy+3);ctx.stroke();
+    oy+=14;
+  }
+  function row(icon,label,desc,iconColor){
+    // icon bubble
+    ctx.fillStyle=(iconColor||'#334')+'cc';ctx.beginPath();ctx.roundRect(14,oy-11,24,16,4);ctx.fill();
+    ctx.strokeStyle=iconColor||'#555';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(14,oy-11,24,16,4);ctx.stroke();
+    ctx.font='10px monospace';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText(icon,26,oy);
+    // label
+    ctx.font='bold 8px Orbitron,monospace';ctx.textAlign='left';ctx.fillStyle='#eee';ctx.fillText(label,44,oy);
+    // desc
+    ctx.font='7px monospace';ctx.fillStyle='#888';ctx.fillText(desc,44,oy+9);
+    oy+=22;
+  }
+  function note(txt,color){
+    ctx.font='7px monospace';ctx.textAlign='left';ctx.fillStyle=color||'#666';
+    ctx.fillText(txt,14,oy);oy+=11;
+  }
+  function divider(){oy+=4;}
+
+  // ── CONTROLS ────────────────────────────────────────
+  section('CONTROLS','#00ccff');
+  row('◀','LEFT BUTTON','Steer your car to the left','#1a3a6a');
+  row('▶','RIGHT BUTTON','Steer your car to the right','#1a3a6a');
+  row('▲','GAS BUTTON','Accelerate — go faster','#5a2800');
+  row('▼','BRAKE BUTTON','Slow down — reduce speed','#5a0000');
+  note('  Keyboard: Arrow Keys  |  P = Pause','#444');
+  divider();
+
+  // ── GOAL ────────────────────────────────────────────
+  section('OBJECTIVE','#ff6600');
+  row('🏁','SURVIVE','Dodge traffic & score points','#2a1a00');
+  row('⛽','FUEL CANS','Pick up to stay alive!','#1a3a00');
+  row('🪙','COINS','Collect to earn upgrade coins','#3a3000');
+  divider();
+
+  // ── SCORING ─────────────────────────────────────────
+  section('SCORING','#88ff88');
+  note('  +10 pts  — successfully dodge an enemy car','#88ff88');
+  note('  +1 coin  — collect a coin on the road','#ffcc00');
+  note('  Score 400 pts → Level Up (speed increases)','#aaa');
+  divider();
+
+  // ── POWER-UPS ───────────────────────────────────────
+  section('POWER-UPS','#cc88ff');
+  row('🛡️','SHIELD','Absorbs 1 crash. Blue dome appears.','#001a3a');
+  row('⚡','BOOST','Speed surge + blue flame trail','#3a1a00');
+  row('⏱','SLOW-MO','All enemies slow to 45% speed','#2a0050');
+  divider();
+
+  // ── TIPS ─────────────────────────────────────────────
+  section('PRO TIPS','#ff8844');
+  note('  • Fuel runs out fast at high levels — prioritise ⛽','#aaa');
+  note('  • Near misses score points — be bold!','#aaa');
+  note('  • Slow-Mo + Gas = easiest coin run','#aaa');
+  note('  • Grab Shield before tight traffic sections','#aaa');
+
+  // ── BACK button ──────────────────────────────────────
+  drawButton(BW/2-50,446,100,26,'\u2190 BACK','#332211','#221100');
+  ctx.fillStyle='#888';ctx.font='bold 9px Orbitron,monospace';ctx.textAlign='center';ctx.fillText('\u2190 BACK',BW/2,461);
+}
+
 function drawGameOver(sc,hs,rec,earned){
   ctx.fillStyle='rgba(0,0,8,0.94)';ctx.fillRect(0,0,BW,BH);
   ctx.shadowColor='#ff0000';ctx.shadowBlur=22;ctx.fillStyle='#ff2222';ctx.font='bold 36px Orbitron,monospace';ctx.textAlign='center';ctx.fillText('GAME',BW/2,128);ctx.fillText('OVER',BW/2,170);ctx.shadowBlur=0;
@@ -451,7 +596,7 @@ let state=S.START,paused=false,goData={};
 let playerX,spd,fuel,score,level,prevLevel;
 let enemies,fuels_arr,coins_arr,pups_arr,explosions,popups;
 let spawnCd,fuelCd,coinCd,puCd,lt;
-let shT=0,boT=0,slT=0,nightLv=0,rainLv=0;
+let shT=0,boT=0,slT=0,nightLv=0,rainLv=0,shieldFlash=0;
 let mission,mProg={},mDone=false,sesCoins=0,frameT=0,aliveT=0;
 
 const ETYPES=[
@@ -467,7 +612,7 @@ function initGame(){
   playerX=LANES[1];spd=3;fuel=100;score=0;level=1;prevLevel=1;
   enemies=[];fuels_arr=[];coins_arr=[];pups_arr=[];explosions=[];popups=[];skids=[];
   spawnCd=60;fuelCd=140;coinCd=80;puCd=300;paused=false;
-  shT=0;boT=0;slT=0;nightLv=0;rainLv=0;frameT=0;aliveT=0;sesCoins=0;
+  shT=0;boT=0;slT=0;nightLv=0;rainLv=0;frameT=0;aliveT=0;sesCoins=0;shieldFlash=0;
   mission=pickM();mProg={};mDone=false;mProg[mission.key]=0;
   lt=performance.now();
   endGameCalled=false;
@@ -499,9 +644,10 @@ canvas.addEventListener('pointerdown',e=>{
   initAudio();
   if(state===S.START){
     if(menuTab==='start'){
-      if(cx>=BW/2-72&&cx<=BW/2+72&&cy>=350&&cy<=386){initGame();state=S.PLAYING;requestAnimationFrame(loop);}
-      else if(cx>=BW/2-118&&cx<=BW/2-50&&cy>=396&&cy<=424){menuTab='garage';}
-      else if(cx>=BW/2+50&&cx<=BW/2+118&&cy>=396&&cy<=424){menuTab='scores';}
+      if(cx>=BW/2-72&&cx<=BW/2+72&&cy>=352&&cy<=388){initGame();state=S.PLAYING;requestAnimationFrame(loop);}
+      else if(cx>=BW/2-143&&cx<=BW/2-71&&cy>=396&&cy<=424){menuTab='garage';}
+      else if(cx>=BW/2-30&&cx<=BW/2+30&&cy>=396&&cy<=424){menuTab='help';}
+      else if(cx>=BW/2+34&&cx<=BW/2+106&&cy>=396&&cy<=424){menuTab='scores';}
     }else{
       if(cy>=446&&cy<=472){menuTab='start';}
       else if(menuTab==='garage'){
@@ -590,6 +736,13 @@ function loop(t){
   if(fuel<=0){endGame();return;}
 
   if(shT>0)shT-=dt;if(boT>0)boT-=dt;if(slT>0)slT-=dt;
+  if(shieldFlash>0){
+    ctx.save();
+    ctx.fillStyle=`rgba(0,200,255,${(shieldFlash/18)*0.45})`;
+    ctx.fillRect(0,0,BW,BH);
+    ctx.restore();
+    shieldFlash-=dt;
+  }
   setEngine(spd,MAX_SPD*(boT>0?1.3:1));
   addSkid(playerX,keys.brake&&spd>3);
 
@@ -604,7 +757,7 @@ function loop(t){
   enemies=enemies.filter(o=>{
     o.y+=spd*dt*slowMult;o.type.draw(o.x,o.y);
     if(hit(playerX+5,PLY+5,PLW-10,PLH-8,o.x+5,o.y+4,o.type.w-10,o.type.h-8)){
-      if(shT>0){shT=0;popups.push({x:o.x-8,y:o.y,txt:'\u{1F6E1} BLOCKED!',a:2,c:'#00aaff'});beep('shield');vib([20,10,20]);return false;}
+      if(shT>0){shT=0;shieldFlash=18;popups.push({x:o.x-8,y:o.y,txt:'\u{1F6E1} BLOCKED!',a:2,c:'#00aaff'});beep('shield');vib([20,10,20]);return false;}
       crash=true;
     }
     if(o.y>BH){score+=10;trackM('dodged',1);popups.push({x:o.x+6,y:BH-14,txt:'+10',a:1,c:'#00ffff'});return false;}
@@ -666,6 +819,28 @@ function loop(t){
     ctx.textAlign='center';ctx.fillText(p.txt,p.x+20,p.y);
     ctx.globalAlpha=1;p.y-=1.4;p.a-=0.020;return p.a>0;
   });
+
+  // ── SLOW-MO SCREEN EFFECT ──────────────────────────────
+  if(slT>0){
+    const slFade=Math.min(1,slT/40); // fade in/out at edges
+    // purple tint overlay
+    ctx.save();
+    ctx.fillStyle=`rgba(80,0,160,${0.13*slFade})`;
+    ctx.fillRect(0,0,BW,BH);
+    // scanlines (horizontal)
+    ctx.globalAlpha=0.06*slFade;
+    ctx.fillStyle='#aa00ff';
+    for(let sy=0;sy<BH;sy+=4){ctx.fillRect(0,sy,BW,2);}
+    // edge vignette
+    const vg=ctx.createRadialGradient(BW/2,BH/2,60,BW/2,BH/2,BH*0.72);
+    vg.addColorStop(0,'rgba(80,0,160,0)');vg.addColorStop(1,`rgba(60,0,130,${0.35*slFade})`);
+    ctx.globalAlpha=1;ctx.fillStyle=vg;ctx.fillRect(0,0,BW,BH);
+    // "SLOW" watermark text
+    ctx.globalAlpha=0.10*slFade;
+    ctx.fillStyle='#cc88ff';ctx.font='bold 52px Orbitron,monospace';ctx.textAlign='center';
+    ctx.fillText('SLOW',BW/2,BH/2+18);
+    ctx.restore();
+  }
 
   level=1+Math.floor(score/400);
   if(level>prevLevel){
